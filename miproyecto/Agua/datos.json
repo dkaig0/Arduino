@@ -1,0 +1,32 @@
+{
+  "tinacos": [
+    {
+      "id": 1,
+      "nombre": "Tinaco Norte",
+      "ubicacion": "Edificio A — techo",
+      "capacidad_litros": 1100,
+      "ph_actual": 7.2
+    },
+    {
+      "id": 2,
+      "nombre": "Tinaco Sur",
+      "ubicacion": "Bodega anexa",
+      "capacidad_litros": 750,
+      "ph_actual": 5.8
+    },
+    {
+      "id": 3,
+      "nombre": "Tinaco Comedor",
+      "ubicacion": "Patio comedor",
+      "capacidad_litros": 1500,
+      "ph_actual": 8.9
+    },
+    {
+      "id": 4,
+      "nombre": "Tinaco Principal",
+      "ubicacion": "Azotea",
+      "capacidad_litros": 2000,
+      "ph_actual": 7.5
+    }
+  ]
+}

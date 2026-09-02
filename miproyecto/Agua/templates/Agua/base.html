@@ -1,0 +1,51 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}AquaVida{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'Agua/estilos.css' %}">
+</head>
+<body>
+<div class="shell">
+
+  <div class="sidebar">
+    <div>
+      <div class="brand-name">AquaVida</div>
+      <div class="brand-sub">Monitoreo de agua potable</div>
+    </div>
+
+    <div class="nav-label">Navegación</div>
+    <a class="nav-item {% if seccion == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Dashboard</a>
+
+    <div class="nav-label">Tinacos</div>
+    {% for t in tinacos_menu %}
+      <a class="nav-item {% if tinaco.id == t.id %}active{% endif %}" href="{% url 'detalle_tinaco' t.id %}">
+        <span class="nav-dot" style="background: {% if t.es_bebible %}#57d494{% else %}#f0796d{% endif %};"></span>
+        {{ t.nombre }}
+        <span class="nav-ph">{{ t.ph_actual }}</span>
+      </a>
+    {% endfor %}
+
+    <div class="spacer"></div>
+
+    <div class="ods-card">
+      <div class="ods-title">ODS 6</div>
+      <div class="ods-text">Agua limpia y saneamiento</div>
+    </div>
+
+    <div class="sesion">
+      <span>{{ usuario }}</span>
+      <a class="salir" href="{% url 'logout' %}">Salir</a>
+    </div>
+    <div class="stack mono">Django · SQLite · Arduino UNO</div>
+  </div>
+
+  <div class="main">
+    {% block contenido %}{% endblock %}
+  </div>
+
+</div>
+</body>
+</html>

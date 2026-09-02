@@ -1,0 +1,33 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ingresar · AquaVida</title>
+  <link rel="stylesheet" href="{% static 'Agua/estilos.css' %}">
+</head>
+<body class="login-body">
+  <div class="login-card">
+    <div class="login-marca">AquaVida</div>
+    <div class="login-sub">Monitoreo de pH en tinacos de agua</div>
+
+    {% if error %}
+      <div class="login-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <label for="id_username">Usuario</label>
+      <input type="text" name="username" id="id_username" autofocus required>
+
+      <label for="id_password">Contraseña</label>
+      <input type="password" name="password" id="id_password" required>
+
+      <button class="boton" type="submit" style="width: 100%; margin-top: 18px;">Ingresar</button>
+    </form>
+
+    <div class="login-pie">ODS 6 · Agua limpia y saneamiento</div>
+  </div>
+</body>
+</html>

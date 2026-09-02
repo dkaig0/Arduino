@@ -1,0 +1,53 @@
+{% extends "Agua/base.html" %}
+
+{% block titulo %}{{ tinaco.nombre }} · AquaVida{% endblock %}
+
+{% block contenido %}
+<a class="back" href="{% url 'dashboard' %}">‹ Volver al dashboard</a>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title">{{ tinaco.nombre }}</h1>
+    <div class="page-sub">{{ tinaco.ubicacion }} · {{ tinaco.capacidad_litros }} litros</div>
+  </div>
+  <span class="chip">vista: detalle_tinaco(id)</span>
+</div>
+
+<div class="detalle-grid">
+  <div class="card">
+    <div class="panel-label">pH medido por el sensor</div>
+    <div class="ph-enorme">{{ tinaco.ph_actual }}</div>
+    {% if tinaco.es_bebible %}
+      <span class="badge badge-ok">{{ tinaco.estado }}</span>
+    {% else %}
+      <span class="badge badge-mal">{{ tinaco.estado }}</span>
+    {% endif %}
+    <div class="stat-label">Medición: {{ tinaco.fecha_medicion|date:"d M Y H:i" }}</div>
+  </div>
+
+  <div class="card">
+    <div class="panel-label">Resultado del análisis</div>
+    <p class="veredicto {% if tinaco.es_bebible %}veredicto-ok{% else %}veredicto-mal{% endif %}">
+      {{ mensaje }}
+    </p>
+
+    <div class="escala">
+      <div class="escala-barra">
+        <div class="escala-rango" style="left: {{ rango_inicio }}%; width: {{ rango_ancho }}%;"></div>
+        <div class="escala-marca" style="left: {{ tinaco.posicion_escala }}%;"></div>
+      </div>
+      <div class="escala-pies">
+        <span>pH 0</span>
+        <span>rango bebible {{ ph_minimo }} – {{ ph_maximo }}</span>
+        <span>pH 14</span>
+      </div>
+    </div>
+
+    <table class="ficha">
+      <tr><th>Sensor</th><td>Sonda de pH conectada a Arduino UNO</td></tr>
+      <tr><th>Ubicación</th><td>{{ tinaco.ubicacion }}</td></tr>
+      <tr><th>Capacidad</th><td>{{ tinaco.capacidad_litros }} litros</td></tr>
+    </table>
+  </div>
+</div>
+{% endblock %}
