@@ -6,10 +6,10 @@
 <div class="page-head">
   <div>
     <h1 class="page-title">Dashboard de tinacos</h1>
-    <div class="page-sub">Estado de potabilidad según la última lectura de pH de cada sensor.</div>
+    <div class="page-sub">Estado de potabilidad según la última medición de cada sensor.</div>
   </div>
   <div>
-    <span class="chip">modelo: Tinaco</span>
+    <span class="chip">base: bd (MariaDB)</span>
     <span class="chip">vista: dashboard()</span>
   </div>
 </div>
@@ -31,7 +31,7 @@
 
 <div class="card" style="margin-bottom: 16px;">
   <div class="stat-label" style="margin: 0;">
-    Regla aplicada en <span class="mono">views.py</span>: si
+    Regla aplicada en <span class="mono">models.py</span>: si
     <span class="mono">{{ ph_minimo }} ≤ pH ≤ {{ ph_maximo }}</span>
     el agua se marca bebible; fuera de ese rango, no bebible.
   </div>
@@ -39,27 +39,33 @@
 
 <div class="card-grid">
   {% for tinaco in tinacos %}
-    <a class="card tinaco-card" href="{% url 'detalle_tinaco' tinaco.id %}">
+    <a class="card tinaco-card" href="{% url 'detalle_tinaco' tinaco.id_tinaco %}">
       <div>
-        <div class="tinaco-nombre">{{ tinaco.nombre }}</div>
-        <div class="tinaco-ubicacion">{{ tinaco.ubicacion }}</div>
+        <div class="tinaco-nombre">{{ tinaco }}</div>
+        <div class="tinaco-ubicacion">
+          {% if tinaco.lugar %}{{ tinaco.lugar.comuna }}, {{ tinaco.lugar.ciudad }}{% else %}Sin ubicación registrada{% endif %}
+        </div>
       </div>
-      <div>
-        <span class="ph-grande">{{ tinaco.ph_actual }}</span>
-        <span class="ph-unidad">pH actual</span>
-      </div>
-      {% if tinaco.es_bebible %}
-        <span class="badge badge-ok">{{ tinaco.estado }}</span>
+      {% if tinaco.medicion %}
+        <div>
+          <span class="ph-grande">{{ tinaco.medicion.ph_medicion|floatformat:1 }}</span>
+          <span class="ph-unidad">pH actual</span>
+        </div>
+        {% if tinaco.medicion.es_bebible %}
+          <span class="badge badge-ok">{{ tinaco.medicion.estado }}</span>
+        {% else %}
+          <span class="badge badge-mal">{{ tinaco.medicion.estado }}</span>
+        {% endif %}
+        <div class="card-foot">
+          <span>Medición: {{ tinaco.medicion.fecha_medicion|date:"d M H:i" }}</span>
+          <span>Ver detalle ›</span>
+        </div>
       {% else %}
-        <span class="badge badge-mal">{{ tinaco.estado }}</span>
+        <div class="vacio">Sin mediciones registradas.</div>
       {% endif %}
-      <div class="card-foot">
-        <span>Medición: {{ tinaco.fecha_medicion|date:"d M H:i" }}</span>
-        <span>Ver detalle ›</span>
-      </div>
     </a>
   {% empty %}
-    <div class="vacio">Todavía no hay tinacos registrados.</div>
+    <div class="vacio">Este usuario no tiene tinacos asignados.</div>
   {% endfor %}
 </div>
 {% endblock %}

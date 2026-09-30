@@ -21,10 +21,10 @@
 
     <div class="nav-label">Tinacos</div>
     {% for t in tinacos_menu %}
-      <a class="nav-item {% if tinaco.id == t.id %}active{% endif %}" href="{% url 'detalle_tinaco' t.id %}">
-        <span class="nav-dot" style="background: {% if t.es_bebible %}#57d494{% else %}#f0796d{% endif %};"></span>
-        {{ t.nombre }}
-        <span class="nav-ph">{{ t.ph_actual }}</span>
+      <a class="nav-item {% if tinaco.id_tinaco == t.id_tinaco %}active{% endif %}" href="{% url 'detalle_tinaco' t.id_tinaco %}">
+        <span class="nav-dot" style="background: {% if t.medicion.es_bebible %}#57d494{% else %}#f0796d{% endif %};"></span>
+        {{ t }}
+        <span class="nav-ph">{{ t.medicion.ph_medicion|floatformat:1 }}</span>
       </a>
     {% endfor %}
 
@@ -36,10 +36,10 @@
     </div>
 
     <div class="sesion">
-      <span>{{ usuario }}</span>
+      <span>{{ usuario.nombre_usuario }} · {{ usuario.rol }}</span>
       <a class="salir" href="{% url 'logout' %}">Salir</a>
     </div>
-    <div class="stack mono">Django · SQLite · Arduino UNO</div>
+    <div class="stack mono">Django · MariaDB · Arduino UNO</div>
   </div>
 
   <div class="main">

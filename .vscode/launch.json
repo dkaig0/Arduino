@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Django: runserver",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "program": "${workspaceFolder}\\miproyecto\\manage.py",
+      "args": ["runserver"],
+      "cwd": "${workspaceFolder}\\miproyecto",
+      "django": true,
+      "console": "integratedTerminal"
+    }
+  ]
+}

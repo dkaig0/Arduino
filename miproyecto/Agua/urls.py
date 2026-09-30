@@ -1,10 +1,13 @@
-from django.urls import path
+from django.urls import path, register_converter
 
 from . import views
+from .convertidores import IdFechaConverter
+
+register_converter(IdFechaConverter, "idfecha")
 
 urlpatterns = [
-    path("", views.dashboard, name="dashboard"),#Ruta / donde se muestra dashboard
-    path("tinaco/<int:tinaco_id>/", views.detalle_tinaco, name="detalle_tinaco"), #ruta tinaco /id y muestra detalle del tinaco con el id proporcionado
-    path("login/", views.login, name="login"),#ruta login/ donde se muestra el formulario de inicio de sesión
-    path("logout/", views.logout, name="logout"),#ruta logout/ donde se cierra la sesión y se redirige al login
+    path("", views.dashboard, name="dashboard"),
+    path("tinaco/<idfecha:tinaco_id>/", views.detalle_tinaco, name="detalle_tinaco"),
+    path("login/", views.login, name="login"),
+    path("logout/", views.logout, name="logout"),
 ]

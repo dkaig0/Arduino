@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-zu%w)bc#0**6^^9%^qfp64xlv9kvp5s-yr*_a!lzr0-x#+s)zf
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['08d7-200-72-240-34.ngrok-free.app']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -67,13 +67,22 @@ WSGI_APPLICATION = 'miproyecto.wsgi.application'
 
 
 # Database
-# Guarda los tinacos. El inicio de sesión no usa la base de datos:
-# vive en la cookie de sesión (ver SESSION_ENGINE más arriba).
+# MariaDB de XAMPP (base "bd", creada con el script SQL del modelo).
+# Se usa un backend propio porque Django 6.1 no acepta MariaDB 10.4.
+# El inicio de sesión no usa tablas: vive en la cookie de sesión.
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'miproyecto.mariadb_xampp',
+        'NAME': 'bd',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     }
 }
 
@@ -87,7 +96,8 @@ TIME_ZONE = 'America/Santiago'
 
 USE_I18N = True
 
-USE_TZ = True
+# Fechas en hora local, igual que las muestra phpMyAdmin.
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -104,5 +114,3 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
-
-CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app']
