@@ -1,26 +1,42 @@
+{# Ficha de un tinaco: su pH actual, el veredicto y el historial de mediciones. #}
+
 {% extends "Agua/base.html" %}
 
+{# El título de la pestaña incluye el nombre del tinaco. #}
 {% block titulo %}{{ tinaco }} · AquaVida{% endblock %}
 
 {% block contenido %}
+{# Enlace para volver al listado. #}
 <a class="back" href="{% url 'dashboard' %}">‹ Volver al dashboard</a>
 
 <div class="page-head">
   <div>
     <h1 class="page-title">{{ tinaco }}</h1>
     <div class="page-sub">
+      {# Dirección resumida, o aviso si todavía no tiene. #}
       {% if lugar %}{{ lugar.calle }} {{ lugar.numero }}, {{ lugar.comuna }}{% else %}Sin ubicación registrada{% endif %}
       · {{ tinaco.capacidad_tinaco }} litros
     </div>
   </div>
-  <span class="chip">vista: detalle_tinaco(id)</span>
+  {# Los botones de editar y eliminar son solo para el administrador. #}
+  {% if es_admin %}
+    <div class="acciones">
+      <a class="boton boton-secundario" href="{% url 'tinaco_editar' tinaco.id_tinaco %}">Editar tinaco</a>
+      <a class="boton boton-peligro" href="{% url 'tinaco_eliminar' tinaco.id_tinaco %}">Eliminar</a>
+    </div>
+  {% else %}
+    <span class="chip">cuenta de solo lectura</span>
+  {% endif %}
 </div>
 
+{# Dos columnas: a la izquierda el pH, a la derecha el análisis. #}
 <div class="detalle-grid">
   <div class="card">
     <div class="panel-label">pH medido por el sensor</div>
     {% if medicion %}
+      {# El número grande con el pH de la última medición. #}
       <div class="ph-enorme">{{ medicion.ph_medicion|floatformat:1 }}</div>
+      {# Etiqueta verde o roja con el resultado. #}
       {% if medicion.es_bebible %}
         <span class="badge badge-ok">{{ medicion.estado }}</span>
       {% else %}
@@ -34,14 +50,18 @@
 
   <div class="card">
     <div class="panel-label">Resultado del análisis</div>
+    {# Frase que explica el resultado; la arma la vista según el pH. #}
     <p class="veredicto {% if medicion.es_bebible %}veredicto-ok{% else %}veredicto-mal{% endif %}">
       {{ mensaje }}
     </p>
 
     {% if medicion %}
+      {# Escala de 0 a 14 con la franja bebible y la marca del valor medido. #}
       <div class="escala">
         <div class="escala-barra">
+          {# La franja verde: dónde empieza y cuánto mide, en porcentaje. #}
           <div class="escala-rango" style="left: {{ rango_inicio }}%; width: {{ rango_ancho }}%;"></div>
+          {# La marca negra, ubicada según el pH medido. #}
           <div class="escala-marca" style="left: {{ medicion.posicion_escala }}%;"></div>
         </div>
         <div class="escala-pies">
@@ -52,42 +72,88 @@
       </div>
     {% endif %}
 
+    {# Ficha con los datos del tinaco. #}
     <table class="ficha">
       <tr><th>Sensor</th><td>Sonda de pH conectada a Arduino UNO</td></tr>
+      {# El Id del tinaco es su fecha de registro, por eso se puede mostrar así. #}
       <tr><th>Registrado</th><td>{{ tinaco.id_tinaco|date:"d M Y H:i" }}</td></tr>
       {% if medicion %}
         <tr>
           <th>Agua en el tinaco</th>
+          {# Litros medidos, capacidad total y el porcentaje que calcula el modelo. #}
           <td>{{ medicion.agua_medicion|floatformat:0 }} de {{ tinaco.capacidad_tinaco }} litros ({{ medicion.porcentaje_llenado }}%)</td>
         </tr>
       {% endif %}
-      {% if lugar %}
-        <tr><th>Dirección</th><td>{{ lugar.calle }} {{ lugar.numero }}, {{ lugar.comuna }}, {{ lugar.ciudad }}</td></tr>
-        <tr><th>Región</th><td>{{ lugar.region }}</td></tr>
-      {% endif %}
+      <tr>
+        <th>Dirección</th>
+        <td>
+          {% if lugar %}
+            {{ lugar.calle }} {{ lugar.numero }}, {{ lugar.comuna }}, {{ lugar.ciudad }} · {{ lugar.region }}
+            {# Editar o borrar la dirección: solo administrador. #}
+            {% if es_admin %}
+              <span class="acciones-fila">
+                <a href="{% url 'ubicacion_editar' lugar.id_ubicacion %}">Editar</a>
+                <a class="peligro" href="{% url 'ubicacion_eliminar' lugar.id_ubicacion %}">Eliminar</a>
+              </span>
+            {% endif %}
+          {% else %}
+            Sin ubicación registrada
+            {# Si no hay dirección, el administrador puede agregarla. #}
+            {% if es_admin %}
+              <span class="acciones-fila"><a href="{% url 'ubicacion_nueva' tinaco.id_tinaco %}">Agregar ubicación</a></span>
+            {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {# Usuario responsable del tinaco. #}
       <tr><th>Responsable</th><td>{{ tinaco.usuario.nombre_usuario }} · {{ tinaco.usuario.email_usuario }}</td></tr>
     </table>
   </div>
 </div>
 
+{# Tabla con el historial completo de mediciones. #}
 <div class="card">
-  <div class="panel-label">Mediciones registradas</div>
-  <table class="ficha">
+  <div class="page-head" style="margin-bottom: 14px;">
+    <div class="panel-label" style="margin: 0;">Mediciones registradas</div>
+    {% if es_admin %}
+      <a class="boton" href="{% url 'medicion_nueva' tinaco.id_tinaco %}">+ Nueva medición</a>
+    {% endif %}
+  </div>
+
+  <table class="tabla">
+    {# Encabezados de la tabla. #}
+    <tr>
+      <th>Fecha</th>
+      <th>pH</th>
+      <th>Agua</th>
+      <th>Estado</th>
+      {# La columna de acciones solo existe para el administrador. #}
+      {% if es_admin %}<th></th>{% endif %}
+    </tr>
+    {# Una fila por medición, de la más nueva a la más antigua. #}
     {% for m in mediciones %}
       <tr>
-        <th>{{ m.fecha_medicion|date:"d M Y H:i" }}</th>
+        <td>{{ m.fecha_medicion|date:"d M Y H:i" }}</td>
+        <td class="mono">{{ m.ph_medicion|floatformat:1 }}</td>
+        <td class="mono">{{ m.agua_medicion|floatformat:0 }} L</td>
         <td>
-          <span class="mono">pH {{ m.ph_medicion|floatformat:1 }}</span>
-          · {{ m.agua_medicion|floatformat:0 }} L
+          {# El estado se pinta verde o rojo según corresponda. #}
           {% if m.es_bebible %}
-            <span style="color: var(--good);">· {{ m.estado }}</span>
+            <span style="color: var(--good);">{{ m.estado }}</span>
           {% else %}
-            <span style="color: var(--bad);">· {{ m.estado }}</span>
+            <span style="color: var(--bad);">{{ m.estado }}</span>
           {% endif %}
         </td>
+        {% if es_admin %}
+          <td class="acciones-fila">
+            <a href="{% url 'medicion_editar' m.id_medicion %}">Editar</a>
+            <a class="peligro" href="{% url 'medicion_eliminar' m.id_medicion %}">Eliminar</a>
+          </td>
+        {% endif %}
       </tr>
     {% empty %}
-      <tr><td class="vacio">Sin mediciones registradas.</td></tr>
+      {# Fila única cuando el tinaco todavía no tiene mediciones. #}
+      <tr><td colspan="5" class="vacio">Sin mediciones registradas.</td></tr>
     {% endfor %}
   </table>
 </div>

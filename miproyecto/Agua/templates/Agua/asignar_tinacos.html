@@ -1,0 +1,63 @@
+{# Página para asignarle tinacos a un usuario. Solo la ve el administrador. #}
+
+{% extends "Agua/base.html" %}
+
+{% block titulo %}Tinacos de {{ objetivo.nombre_usuario }} · AquaVida{% endblock %}
+
+{% block contenido %}
+<a class="back" href="{% url 'usuarios' %}">‹ Volver a usuarios</a>
+
+<div class="page-head">
+  <div>
+    {# objetivo es el usuario al que se le están asignando tinacos. #}
+    <h1 class="page-title">Tinacos de {{ objetivo.nombre_usuario }}</h1>
+    <div class="page-sub">{{ objetivo.email_usuario }} · {{ objetivo.rol }}</div>
+  </div>
+</div>
+
+{# Dos columnas: lo que ya tiene y lo que se le puede asignar. #}
+<div class="detalle-grid">
+  <div class="card">
+    {# count cuenta cuántos tinacos tiene a cargo. #}
+    <div class="panel-label">A su cargo ({{ asignados.count }})</div>
+    <table class="tabla">
+      {% for t in asignados %}
+        <tr>
+          <td><strong>{{ t }}</strong><br><span class="tinaco-ubicacion">{{ t.capacidad_tinaco }} litros</span></td>
+          <td class="acciones-fila">
+            <a href="{% url 'detalle_tinaco' t.id_tinaco %}">Ver</a>
+            {# Reasignar lleva al formulario del tinaco, donde se elige otro responsable. #}
+            <a href="{% url 'tinaco_editar' t.id_tinaco %}">Reasignar</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td class="vacio">Este usuario no tiene tinacos a su cargo.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="panel-label">Asignar más tinacos</div>
+    {# Solo se muestra el formulario si existen tinacos de otros usuarios. #}
+    {% if formulario.tinacos.field.queryset %}
+      <form method="post">
+        {% csrf_token %}
+        <div class="lista-check">
+          {# Dibuja la lista de casillas con los tinacos disponibles. #}
+          {{ formulario.tinacos }}
+        </div>
+        <div class="acciones">
+          <button class="boton" type="submit">Asignar seleccionados</button>
+        </div>
+      </form>
+    {% else %}
+      <div class="vacio">Todos los tinacos ya están a cargo de este usuario.</div>
+    {% endif %}
+    {# Explicación de por qué no hay una opción para quitar. #}
+    <div class="ayuda" style="margin-top: 14px;">
+      Para quitarle un tinaco, asígnalo a otro usuario con el botón «Reasignar»:
+      cada tinaco debe tener siempre un responsable.
+    </div>
+  </div>
+</div>
+{% endblock %}

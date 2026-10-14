@@ -1,48 +1,86 @@
+{# Plantilla base: el marco que comparten todas las páginas (barra lateral y avisos). #}
+{# Las demás plantillas la extienden y solo rellenan el bloque "contenido". #}
+
+{# load static habilita la etiqueta {% static %} para enlazar la hoja de estilos. #}
 {% load static %}
 <!doctype html>
 <html lang="es">
 <head>
+  {# Codificación que permite tildes y ñ. #}
   <meta charset="utf-8">
+  {# Hace que la página se adapte al ancho del dispositivo. #}
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {# Título de la pestaña. Cada página puede reemplazarlo con su propio bloque. #}
   <title>{% block titulo %}AquaVida{% endblock %}</title>
+  {# Hoja de estilos de la aplicación. #}
   <link rel="stylesheet" href="{% static 'Agua/estilos.css' %}">
 </head>
 <body>
+{# Contenedor principal: barra lateral a la izquierda y contenido a la derecha. #}
 <div class="shell">
 
+  {# ---------- Barra lateral ---------- #}
   <div class="sidebar">
     <div>
+      {# Nombre del sistema. #}
       <div class="brand-name">AquaVida</div>
       <div class="brand-sub">Monitoreo de agua potable</div>
     </div>
 
     <div class="nav-label">Navegación</div>
+    {# Enlace al dashboard. La clase "active" lo resalta cuando se está en esa sección. #}
     <a class="nav-item {% if seccion == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Dashboard</a>
+    {# La sección de usuarios solo se muestra al administrador. #}
+    {% if es_admin %}
+      <a class="nav-item {% if seccion == 'usuarios' %}active{% endif %}" href="{% url 'usuarios' %}">Usuarios</a>
+    {% endif %}
 
     <div class="nav-label">Tinacos</div>
+    {# Recorre los tinacos que esta cuenta puede ver y arma un enlace para cada uno. #}
     {% for t in tinacos_menu %}
       <a class="nav-item {% if tinaco.id_tinaco == t.id_tinaco %}active{% endif %}" href="{% url 'detalle_tinaco' t.id_tinaco %}">
+        {# Punto verde si el agua es bebible, rojo si no lo es. #}
         <span class="nav-dot" style="background: {% if t.medicion.es_bebible %}#57d494{% else %}#f0796d{% endif %};"></span>
+        {# Nombre del tinaco. #}
         {{ t }}
+        {# Su pH actual, con un decimal. #}
         <span class="nav-ph">{{ t.medicion.ph_medicion|floatformat:1 }}</span>
       </a>
     {% endfor %}
+    {# Solo el administrador puede crear tinacos. #}
+    {% if es_admin %}
+      <a class="nav-item nav-nuevo" href="{% url 'tinaco_nuevo' %}">+ Nuevo tinaco</a>
+    {% endif %}
 
+    {# Espacio flexible que empuja lo siguiente hacia abajo. #}
     <div class="spacer"></div>
 
+    {# Recuadro del Objetivo de Desarrollo Sostenible que inspira el proyecto. #}
     <div class="ods-card">
       <div class="ods-title">ODS 6</div>
       <div class="ods-text">Agua limpia y saneamiento</div>
     </div>
 
+    {# Quién está conectado, con su rol, y el enlace para cerrar sesión. #}
     <div class="sesion">
       <span>{{ usuario.nombre_usuario }} · {{ usuario.rol }}</span>
       <a class="salir" href="{% url 'logout' %}">Salir</a>
     </div>
+    {# Tecnologías usadas, como referencia en la presentación. #}
     <div class="stack mono">Django · MariaDB · Arduino UNO</div>
   </div>
 
+  {# ---------- Zona de contenido ---------- #}
   <div class="main">
+    {# Avisos que dejó la vista anterior ("Usuario creado", "Medición eliminada"). #}
+    {% if messages %}
+      {% for mensaje in messages %}
+        {# Rojo si es un error, verde en cualquier otro caso. #}
+        <div class="aviso {% if mensaje.tags == 'error' %}aviso-error{% else %}aviso-ok{% endif %}">{{ mensaje }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {# Aquí cada página inserta su propio contenido. #}
     {% block contenido %}{% endblock %}
   </div>
 

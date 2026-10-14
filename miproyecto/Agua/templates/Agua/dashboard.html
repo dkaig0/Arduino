@@ -1,34 +1,55 @@
+{# Dashboard: resumen y tarjetas de los tinacos visibles para la cuenta conectada. #}
+
+{# Reutiliza el marco con la barra lateral. #}
 {% extends "Agua/base.html" %}
 
+{# Título de la pestaña del navegador. #}
 {% block titulo %}Dashboard · AquaVida{% endblock %}
 
+{# Todo lo que sigue se inserta en el bloque "contenido" de base.html. #}
 {% block contenido %}
+{# Encabezado: título a la izquierda, acciones a la derecha. #}
 <div class="page-head">
   <div>
     <h1 class="page-title">Dashboard de tinacos</h1>
-    <div class="page-sub">Estado de potabilidad según la última medición de cada sensor.</div>
+    <div class="page-sub">
+      {# El texto cambia según el rol, porque cada uno ve un conjunto distinto. #}
+      {% if es_admin %}
+        Estado de potabilidad de todos los tinacos, según la última medición de cada sensor.
+      {% else %}
+        Estado de potabilidad de tus tinacos, según la última medición de cada sensor.
+      {% endif %}
+    </div>
   </div>
-  <div>
-    <span class="chip">base: bd (MariaDB)</span>
-    <span class="chip">vista: dashboard()</span>
+  <div class="acciones">
+    {# Solo el administrador ve el botón para crear. #}
+    {% if es_admin %}
+      <a class="boton" href="{% url 'tinaco_nuevo' %}">+ Nuevo tinaco</a>
+    {% else %}
+      <span class="chip">cuenta de solo lectura</span>
+    {% endif %}
   </div>
 </div>
 
+{# Tres recuadros con el resumen que calculó la vista. #}
 <div class="stat-grid">
   <div class="card">
     <div class="stat-value">{{ total }}</div>
     <div class="stat-label">Tinacos monitoreados</div>
   </div>
   <div class="card">
+    {# En verde, los tinacos con agua apta. #}
     <div class="stat-value" style="color: var(--good);">{{ bebibles }}</div>
     <div class="stat-label">Agua bebible</div>
   </div>
   <div class="card">
+    {# En rojo, los que están fuera del rango permitido. #}
     <div class="stat-value" style="color: var(--bad);">{{ no_bebibles }}</div>
     <div class="stat-label">Agua no bebible</div>
   </div>
 </div>
 
+{# Explicación de la regla que se aplica, con los límites reales del código. #}
 <div class="card" style="margin-bottom: 16px;">
   <div class="stat-label" style="margin: 0;">
     Regla aplicada en <span class="mono">models.py</span>: si
@@ -37,26 +58,33 @@
   </div>
 </div>
 
+{# Una tarjeta por tinaco. #}
 <div class="card-grid">
   {% for tinaco in tinacos %}
+    {# Toda la tarjeta es un enlace a la ficha del tinaco. #}
     <a class="card tinaco-card" href="{% url 'detalle_tinaco' tinaco.id_tinaco %}">
       <div>
         <div class="tinaco-nombre">{{ tinaco }}</div>
         <div class="tinaco-ubicacion">
+          {# Si tiene dirección se muestra; si no, se avisa. #}
           {% if tinaco.lugar %}{{ tinaco.lugar.comuna }}, {{ tinaco.lugar.ciudad }}{% else %}Sin ubicación registrada{% endif %}
         </div>
       </div>
+      {# El resto de la tarjeta solo tiene sentido si hay mediciones. #}
       {% if tinaco.medicion %}
         <div>
+          {# floatformat:1 muestra 7,2 en vez de 7,20. #}
           <span class="ph-grande">{{ tinaco.medicion.ph_medicion|floatformat:1 }}</span>
           <span class="ph-unidad">pH actual</span>
         </div>
+        {# Etiqueta verde o roja según el resultado. #}
         {% if tinaco.medicion.es_bebible %}
           <span class="badge badge-ok">{{ tinaco.medicion.estado }}</span>
         {% else %}
           <span class="badge badge-mal">{{ tinaco.medicion.estado }}</span>
         {% endif %}
         <div class="card-foot">
+          {# El filtro date da formato a la fecha, por ejemplo "16 Sep 08:15". #}
           <span>Medición: {{ tinaco.medicion.fecha_medicion|date:"d M H:i" }}</span>
           <span>Ver detalle ›</span>
         </div>
@@ -64,8 +92,9 @@
         <div class="vacio">Sin mediciones registradas.</div>
       {% endif %}
     </a>
+  {# empty se muestra cuando la lista de tinacos viene vacía. #}
   {% empty %}
-    <div class="vacio">Este usuario no tiene tinacos asignados.</div>
+    <div class="vacio">No hay tinacos asignados a esta cuenta.</div>
   {% endfor %}
 </div>
 {% endblock %}

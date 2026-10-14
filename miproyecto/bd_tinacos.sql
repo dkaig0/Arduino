@@ -98,18 +98,22 @@ CREATE TABLE Ubicacion (
 
 -- ------------------------------------------------------------
 -- Datos ficticios
--- La contraseña del usuario demo es "demo1234", guardada con el
--- hash que genera Django (el login no acepta contraseñas en texto plano).
+-- Dos cuentas, guardadas con el hash que genera Django
+-- (el login no acepta contraseñas en texto plano):
+--   demo / demo1234  -> rol Administrador: puede crear, editar y eliminar todo
+--   user / user1234  -> rol Usuario: solo lectura de sus propios tinacos
 -- ------------------------------------------------------------
 INSERT INTO Rol (Rol) VALUES ('Administrador'), ('Usuario');
 
 INSERT INTO Usuario (Id_usuario, nombre_usuario, email_usuario, password_usuario, Rol_Id_rol) VALUES
     ('2026-08-01 09:00:00.000000', 'demo', 'demo@aquavida.cl',
-     'pbkdf2_sha256$1500000$7vGvhvhhUdJlP8qPdyWX1G$Zp/7FzohjYLmo+IMXNaIvznLLk15hnRKAl/18eRja6o=', 1);
+     'pbkdf2_sha256$1500000$7vGvhvhhUdJlP8qPdyWX1G$Zp/7FzohjYLmo+IMXNaIvznLLk15hnRKAl/18eRja6o=', 1),
+    ('2026-08-02 10:30:00.000000', 'user', 'user@aquavida.cl',
+     'pbkdf2_sha256$1500000$FkerSCagEUF0R9gkJMWsbE$lDXJ3xdi1gAe2vxDwy6rAA6b93mMAkgUF9/yjEn8DLs=', 2);
 
 INSERT INTO Tinaco (Id_Tinaco, nombre_tinaco, capacidad_tinaco, Usuario_Id_usuario) VALUES
     ('2026-08-01 09:15:00.000000', 'Tinaco Norte',   1100, '2026-08-01 09:00:00.000000'),
-    ('2026-08-03 11:40:00.000000', 'Tinaco Sur',      750, '2026-08-01 09:00:00.000000'),
+    ('2026-08-03 11:40:00.000000', 'Tinaco Sur',      750, '2026-08-02 10:30:00.000000'),
     ('2026-08-05 16:20:00.000000', 'Tinaco Comedor', 1500, '2026-08-01 09:00:00.000000');
 
 INSERT INTO Ubicacion (Id_ubicacion, Region, Ciudad, Comuna, Calle, Numero, Tinaco_Id_Tinaco) VALUES

@@ -1,3 +1,4 @@
+{# Página de ingreso. No extiende base.html porque todavía no hay sesión ni menú. #}
 {% load static %}
 <!doctype html>
 <html lang="es">
@@ -7,26 +8,33 @@
   <title>Ingresar · AquaVida</title>
   <link rel="stylesheet" href="{% static 'Agua/estilos.css' %}">
 </head>
+{# La clase login-body centra la tarjeta en la pantalla. #}
 <body class="login-body">
   <div class="login-card">
     <div class="login-marca">AquaVida</div>
     <div class="login-sub">Monitoreo de pH en tinacos de agua</div>
 
+    {# Si la vista envió un error (datos incorrectos), se muestra aquí. #}
     {% if error %}
       <div class="login-error">{{ error }}</div>
     {% endif %}
 
+    {# method="post" envía los datos sin que aparezcan en la dirección. #}
     <form method="post">
+      {# Token de seguridad que Django exige en todo formulario POST. #}
       {% csrf_token %}
       <label for="id_username">Usuario o correo</label>
+      {# autofocus deja el cursor listo en este campo al abrir la página. #}
       <input type="text" name="username" id="id_username" autofocus required>
 
       <label for="id_password">Contraseña</label>
+      {# type="password" oculta lo que se escribe. #}
       <input type="password" name="password" id="id_password" required>
 
       <button class="boton" type="submit" style="width: 100%; margin-top: 18px;">Ingresar</button>
     </form>
 
+    {# Referencia al ODS que inspira el proyecto. #}
     <div class="login-pie">ODS 6 · Agua limpia y saneamiento</div>
   </div>
 </body>

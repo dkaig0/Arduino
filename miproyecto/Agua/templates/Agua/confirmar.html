@@ -1,0 +1,48 @@
+{# Plantilla genérica de confirmación antes de eliminar. #}
+{# La usan los borrados de usuario, tinaco, medición y ubicación. #}
+{# Nada se borra al abrir esta página: solo al presionar el botón, que envía un POST. #}
+
+{% extends "Agua/base.html" %}
+
+{% block titulo %}{{ titulo }} · AquaVida{% endblock %}
+
+{% block contenido %}
+{# El enlace de volver, con o sin Id según de dónde se venga. #}
+{% if volver_id %}
+  <a class="back" href="{% url volver volver_id %}">‹ Volver</a>
+{% else %}
+  <a class="back" href="{% url volver %}">‹ Volver</a>
+{% endif %}
+
+<div class="page-head">
+  <h1 class="page-title">{{ titulo }}</h1>
+</div>
+
+<div class="card formulario">
+  {# Si la vista encontró una razón para no permitir el borrado, se explica y no se ofrece el botón. #}
+  {% if impedimento %}
+    <div class="aviso aviso-error">{{ impedimento }}</div>
+    {% if volver_id %}
+      <a class="boton boton-secundario" href="{% url volver volver_id %}">Volver</a>
+    {% else %}
+      <a class="boton boton-secundario" href="{% url volver %}">Volver</a>
+    {% endif %}
+  {% else %}
+    {# Explicación de lo que se va a eliminar. #}
+    <p class="confirmar-texto">{{ mensaje }}</p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="acciones">
+        {# Este botón es el que realmente ejecuta el borrado en la vista. #}
+        <button class="boton boton-peligro" type="submit">Sí, eliminar</button>
+        {# Cancelar solo devuelve a la página anterior. #}
+        {% if volver_id %}
+          <a class="boton boton-secundario" href="{% url volver volver_id %}">Cancelar</a>
+        {% else %}
+          <a class="boton boton-secundario" href="{% url volver %}">Cancelar</a>
+        {% endif %}
+      </div>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

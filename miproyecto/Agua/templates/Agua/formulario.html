@@ -1,0 +1,57 @@
+{# Plantilla genérica de formularios. #}
+{# La usan todas las pantallas de crear y editar: usuario, tinaco, medición y ubicación. #}
+{# La vista decide el título, el formulario y a dónde vuelve el botón Cancelar. #}
+
+{% extends "Agua/base.html" %}
+
+{% block titulo %}{{ titulo }} · AquaVida{% endblock %}
+
+{% block contenido %}
+{# Algunas pantallas vuelven a una página que necesita un Id (la ficha del tinaco) #}
+{# y otras a una que no lo necesita (la lista de usuarios). #}
+{% if volver_id %}
+  <a class="back" href="{% url volver volver_id %}">‹ Volver</a>
+{% else %}
+  <a class="back" href="{% url volver %}">‹ Volver</a>
+{% endif %}
+
+<div class="page-head">
+  <h1 class="page-title">{{ titulo }}</h1>
+</div>
+
+{# method="post" envía los datos de forma oculta, no en la dirección. #}
+<form method="post" class="card formulario">
+  {# Token de seguridad obligatorio en los formularios de Django. #}
+  {% csrf_token %}
+
+  {# Errores que no pertenecen a un campo en particular. #}
+  {% if formulario.non_field_errors %}
+    <div class="aviso aviso-error">{{ formulario.non_field_errors }}</div>
+  {% endif %}
+
+  {# Se recorre campo por campo en vez de usar {{ formulario }}, para controlar el diseño. #}
+  {% for campo in formulario %}
+    <div class="campo">
+      {# Etiqueta del campo, asociada al input por su id. #}
+      <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+      {# El campo mismo (caja de texto, número, lista desplegable...). #}
+      {{ campo }}
+      {# Texto de ayuda, si el formulario lo definió. #}
+      {% if campo.help_text %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}
+      {# Errores de validación de este campo, por ejemplo "La capacidad debe ser mayor que cero". #}
+      {% for error in campo.errors %}<div class="error">{{ error }}</div>{% endfor %}
+    </div>
+  {% endfor %}
+
+  <div class="acciones">
+    {# El texto del botón lo define la vista: "Crear usuario", "Guardar cambios"... #}
+    <button class="boton" type="submit">{{ texto_boton }}</button>
+    {# Cancelar es un enlace: no envía nada y vuelve a la página anterior. #}
+    {% if volver_id %}
+      <a class="boton boton-secundario" href="{% url volver volver_id %}">Cancelar</a>
+    {% else %}
+      <a class="boton boton-secundario" href="{% url volver %}">Cancelar</a>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

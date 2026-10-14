@@ -1,0 +1,61 @@
+{# Lista de cuentas del sistema. Solo la ve el administrador. #}
+
+{% extends "Agua/base.html" %}
+
+{% block titulo %}Usuarios · AquaVida{% endblock %}
+
+{% block contenido %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Usuarios</h1>
+    <div class="page-sub">Cuentas que pueden entrar al sistema y el rol de cada una.</div>
+  </div>
+  <div>
+    {# Botón para crear una cuenta nueva. #}
+    <a class="boton" href="{% url 'usuario_nuevo' %}">+ Nuevo usuario</a>
+  </div>
+</div>
+
+{# El contenedor permite desplazar la tabla de lado en pantallas angostas. #}
+<div class="tabla-wrap">
+  <table class="tabla">
+    {# Encabezados de la tabla. #}
+    <tr>
+      <th>Usuario</th>
+      <th>Correo</th>
+      <th>Rol</th>
+      <th>Tinacos</th>
+      <th>Creado</th>
+      {# Columna sin título para los enlaces de acción. #}
+      <th></th>
+    </tr>
+    {# Una fila por cada cuenta registrada. #}
+    {% for u in usuarios %}
+      <tr>
+        <td><strong>{{ u.nombre_usuario }}</strong></td>
+        <td>{{ u.email_usuario }}</td>
+        <td>
+          {# El rol se pinta distinto según si puede modificar o solo leer. #}
+          {% if u.es_admin %}
+            <span class="badge badge-admin">{{ u.rol }}</span>
+          {% else %}
+            <span class="badge badge-lectura">{{ u.rol }} (solo lectura)</span>
+          {% endif %}
+        </td>
+        {# Cuántos tinacos tiene a cargo; el número lleva al detalle de asignación. #}
+        <td><a href="{% url 'usuario_tinacos' u.id_usuario %}">{{ u.tinacos.count }}</a></td>
+        {# El Id de la cuenta es su fecha de creación. #}
+        <td>{{ u.id_usuario|date:"d M Y H:i" }}</td>
+        <td class="acciones-fila">
+          <a href="{% url 'usuario_tinacos' u.id_usuario %}">Asignar tinacos</a>
+          <a href="{% url 'usuario_editar' u.id_usuario %}">Editar</a>
+          <a class="peligro" href="{% url 'usuario_eliminar' u.id_usuario %}">Eliminar</a>
+        </td>
+      </tr>
+    {% empty %}
+      {# colspan hace que esta celda ocupe las seis columnas. #}
+      <tr><td colspan="6" class="vacio">No hay usuarios registrados.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
