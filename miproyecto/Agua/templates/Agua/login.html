@@ -6,7 +6,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ingresar · AquaVida</title>
-  <link rel="stylesheet" href="{% static 'Agua/estilos.css' %}">
+  <link rel="stylesheet" href="{% static 'Agua/estilos.css' %}?v={{ version_css }}">
 </head>
 {# La clase login-body centra la tarjeta en la pantalla. #}
 <body class="login-body">
@@ -14,28 +14,58 @@
     <div class="login-marca">AquaVida</div>
     <div class="login-sub">Monitoreo de pH en tinacos de agua</div>
 
-    {# Si la vista envió un error (datos incorrectos), se muestra aquí. #}
-    {% if error %}
+    {# Avisos pendientes, por ejemplo "Cerraste sesión correctamente". #}
+    {% for mensaje in messages %}
+      <div class="login-aviso">{{ mensaje }}</div>
+    {% endfor %}
+
+    {# Errores del formulario de Django (usuario o contraseña incorrectos, cuenta desactivada). #}
+    {% for error in formulario.non_field_errors %}
       <div class="login-error">{{ error }}</div>
-    {% endif %}
+    {% endfor %}
 
     {# method="post" envía los datos sin que aparezcan en la dirección. #}
+    {# Sin "action", el formulario se envía a la misma dirección, conservando ?next=... #}
     <form method="post">
       {# Token de seguridad que Django exige en todo formulario POST. #}
       {% csrf_token %}
-      <label for="id_username">Usuario o correo</label>
+      <label for="id_username">{{ formulario.username.label }}</label>
       {# autofocus deja el cursor listo en este campo al abrir la página. #}
-      <input type="text" name="username" id="id_username" autofocus required>
+      {# value conserva lo escrito si el ingreso falla, para no tener que escribirlo de nuevo. #}
+      <input type="text" name="username" id="id_username" maxlength="30"
+             value="{{ formulario.username.value|default_if_none:'' }}" autofocus required>
 
       <label for="id_password">Contraseña</label>
       {# type="password" oculta lo que se escribe. #}
-      <input type="password" name="password" id="id_password" required>
+      <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+
+      {# Si se marca, la sesión dura 7 días; si no, termina al cerrar el navegador. #}
+      <label class="login-recordar" for="id_recordarme">
+        <input type="checkbox" name="recordarme" id="id_recordarme"
+               {% if formulario.recordarme.value %}checked{% endif %}>
+        Mantener sesión iniciada
+      </label>
 
       <button class="boton" type="submit" style="width: 100%; margin-top: 18px;">Ingresar</button>
     </form>
 
     {# Referencia al ODS que inspira el proyecto. #}
     <div class="login-pie">ODS 6 · Agua limpia y saneamiento</div>
+
+    {# Borra la decisión sobre cookies para que la ventana vuelva a aparecer. #}
+    {% if not mostrar_aviso_cookies %}
+      <form class="login-cookies" method="post" action="{% url 'guardar_cookies' %}">
+        {% csrf_token %}
+        <input type="hidden" name="decision" value="cambiar">
+        <input type="hidden" name="volver" value="{{ request.get_full_path }}">
+        <button type="submit">Preferencias de cookies</button>
+      </form>
+    {% endif %}
   </div>
+
+  {# Ventana de cookies, solo mientras la persona no haya decidido. #}
+  {% if mostrar_aviso_cookies %}
+    {% include "Agua/cookies.html" %}
+  {% endif %}
 </body>
 </html>

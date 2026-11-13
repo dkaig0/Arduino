@@ -10,6 +10,15 @@
 --   Rol BLOB          ->  VARCHAR(30)
 --   Se agrega ENGINE=InnoDB (necesario para FOREIGN KEY)
 --   Orden de creacion segun dependencias: Rol -> Usuario -> Tinaco -> ...
+--   nombre_usuario es UNIQUE: Django lo usa para iniciar sesion
+--
+-- Orden de instalacion (tambien sirve para reiniciar la base desde cero):
+--   1. Ejecutar este script completo en phpMyAdmin (pestaña SQL o Importar).
+--      Borra TODAS las tablas (las del negocio y las de Django) y crea
+--      las del negocio con los datos ficticios.
+--   2. Ejecutar "python manage.py migrate" para volver a crear las tablas
+--      de Django: auth_*, django_admin_log, django_session, etc.
+--      django_admin_log apunta a Usuario, por eso va despues de este script.
 -- ============================================================
 
 -- Si ya tienes la base creada, comenta estas dos lineas y
@@ -17,9 +26,30 @@
 -- CREATE DATABASE IF NOT EXISTS bd DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 -- USE bd;
 
-SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS Ubicacion, Medicion, Tinaco, Usuario, Rol;
-SET FOREIGN_KEY_CHECKS = 1;
+-- ------------------------------------------------------------
+-- Borrado previo
+-- Se borra primero cada tabla "hija" y despues la tabla a la que
+-- apunta su clave foranea. Asi no hace falta desactivar
+-- FOREIGN_KEY_CHECKS: phpMyAdmin puede volver a activarlo con su
+-- casilla "Habilitar la revision de las claves foraneas", y en ese
+-- caso borrar Usuario antes que django_admin_log da el error #1451.
+-- ------------------------------------------------------------
+
+-- Tablas de Django (las vuelve a crear "python manage.py migrate").
+DROP TABLE IF EXISTS django_admin_log;        -- apunta a Usuario y a django_content_type
+DROP TABLE IF EXISTS auth_group_permissions;  -- apunta a auth_group y a auth_permission
+DROP TABLE IF EXISTS auth_permission;         -- apunta a django_content_type
+DROP TABLE IF EXISTS auth_group;
+DROP TABLE IF EXISTS django_content_type;
+DROP TABLE IF EXISTS django_session;
+DROP TABLE IF EXISTS django_migrations;       -- registro de migraciones aplicadas
+
+-- Tablas del negocio, de la mas dependiente a la menos dependiente.
+DROP TABLE IF EXISTS Ubicacion;  -- apunta a Tinaco
+DROP TABLE IF EXISTS Medicion;   -- apunta a Tinaco
+DROP TABLE IF EXISTS Tinaco;     -- apunta a Usuario
+DROP TABLE IF EXISTS Usuario;    -- apunta a Rol
+DROP TABLE IF EXISTS Rol;
 
 -- ------------------------------------------------------------
 -- Rol
@@ -40,6 +70,8 @@ CREATE TABLE Usuario (
     password_usuario  VARCHAR(255) NOT NULL,
     Rol_Id_rol        INT UNSIGNED NOT NULL,
     CONSTRAINT Usuario_PK PRIMARY KEY (Id_usuario),
+    -- El nombre de usuario se usa para iniciar sesión: no se puede repetir.
+    CONSTRAINT Usuario_nombre_UK UNIQUE (nombre_usuario),
     CONSTRAINT Usuario_email_UK UNIQUE (email_usuario),
     CONSTRAINT Usuario_Rol_FK FOREIGN KEY (Rol_Id_rol)
         REFERENCES Rol (Id_rol)

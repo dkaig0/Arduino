@@ -1,0 +1,43 @@
+{# Ventana de consentimiento de cookies. #}
+{# La incluyen base.html y login.html cuando mostrar_aviso_cookies es True, es decir, #}
+{# mientras la persona no haya aceptado ni rechazado (ver context_processors.py). #}
+{# El fondo oscuro cubre toda la página: hay que elegir una opción para seguir. #}
+<div class="cookies-fondo" role="dialog" aria-modal="true" aria-labelledby="cookies-titulo">
+  {# Las animaciones (aparecer, saltar y girar) están en estilos.css: no se usa JavaScript. #}
+  <div class="cookies-caja">
+    <div class="cookies-cabecera">
+      {# Galleta dibujada solo con CSS (clase cookies-icono); es decorativa. #}
+      <div class="cookies-icono" aria-hidden="true"></div>
+      <div class="cookies-titulo" id="cookies-titulo">Uso de cookies</div>
+    </div>
+    <p class="cookies-texto">
+      AquaVida usa cookies <strong>necesarias</strong> para funcionar: mantienen tu sesión
+      iniciada (<span class="mono">sessionid</span>) y protegen los formularios
+      (<span class="mono">csrftoken</span>).
+    </p>
+    <p class="cookies-texto">
+      Con tu permiso, también usa una cookie <strong>opcional</strong>,
+      <span class="mono">ultimo_ingreso</span>, que recuerda la fecha de tu último ingreso en este
+      navegador para mostrártela en el dashboard. Si no reconoces esa fecha, sabrás que alguien
+      más usó tu cuenta.
+    </p>
+
+    <div class="cookies-acciones">
+      {# Cada botón es un formulario POST con token CSRF hacia la vista guardar_cookies. #}
+      <form method="post" action="{% url 'guardar_cookies' %}">
+        {% csrf_token %}
+        <input type="hidden" name="decision" value="aceptadas">
+        {# volver indica a qué página regresar después de guardar la decisión. #}
+        <input type="hidden" name="volver" value="{{ request.get_full_path }}">
+        <button class="boton" type="submit">Aceptar cookies</button>
+      </form>
+      <form method="post" action="{% url 'guardar_cookies' %}">
+        {% csrf_token %}
+        <input type="hidden" name="decision" value="rechazadas">
+        <input type="hidden" name="volver" value="{{ request.get_full_path }}">
+        <button class="boton cookies-rechazar" type="submit">Rechazar opcionales</button>
+      </form>
+    </div>
+    <div class="cookies-pie">Puedes cambiar tu decisión en «Preferencias de cookies».</div>
+  </div>
+</div>

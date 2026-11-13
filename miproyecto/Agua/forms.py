@@ -8,18 +8,110 @@ revisa que los datos sean válidos y recién ahí los guarda en la base de datos
 # forms contiene los tipos de campo (texto, número, contraseña) y las validaciones.
 from django import forms
 
-# make_password convierte una contraseña en un hash, para no guardarla en texto plano.
-from django.contrib.auth.hashers import make_password
+# password_validation aplica las reglas de AUTH_PASSWORD_VALIDATORS (settings.py):
+# largo mínimo, que no sea muy común, que no sea solo números, etc.
+from django.contrib.auth import password_validation
+
+# AdminAuthenticationForm es el formulario de ingreso de Django Admin.
+from django.contrib.admin.forms import AdminAuthenticationForm
+
+# AuthenticationForm es el formulario de ingreso que trae Django.
+from django.contrib.auth.forms import AuthenticationForm
+
+# Contadores de intentos fallidos y bloqueo temporal de cuentas.
+from . import bloqueo
 
 # Los modelos sobre los que trabajan estos formularios.
 from .models import Medicion, Tinaco, Ubicacion, Usuario
+
+
+def mensaje_bloqueo(segundos):
+    """Texto que se muestra mientras la cuenta está bloqueada."""
+    return (
+        "Cuenta bloqueada por demasiados intentos fallidos. "
+        f"Intenta de nuevo en {segundos} segundos."
+    )
+
+
+class BloqueoPorIntentosMixin:
+    """
+    Agrega a un formulario de ingreso los mensajes del bloqueo por intentos fallidos.
+
+    El bloqueo en sí lo aplica el backend (backends.py); este mixin solo explica
+    a la persona qué pasó. Lo usan el login de la aplicación y el de Django Admin.
+    """
+
+    def clean(self):
+        # Lo que se escribió en el campo usuario (nombre o correo).
+        identificador = self.cleaned_data.get("username")
+
+        # Si la cuenta ya está bloqueada, se avisa cuánto falta, sin revisar la contraseña.
+        if identificador:
+            segundos = bloqueo.segundos_restantes(identificador)
+            if segundos:
+                raise forms.ValidationError(mensaje_bloqueo(segundos), code="bloqueada")
+
+        try:
+            # Validación normal de Django: llama a authenticate().
+            return super().clean()
+        except forms.ValidationError as error:
+            # user_cache es None cuando usuario o contraseña fueron incorrectos
+            # (el backend ya sumó el intento fallido).
+            if identificador and self.user_cache is None:
+                # Si ese intento fue el que bloqueó la cuenta, se avisa.
+                segundos = bloqueo.segundos_restantes(identificador)
+                if segundos:
+                    raise forms.ValidationError(mensaje_bloqueo(segundos), code="bloqueada")
+                # Si no, se agrega cuántos intentos quedan.
+                quedan = bloqueo.intentos_restantes(identificador)
+                raise forms.ValidationError(
+                    " ".join(error.messages)
+                    + f" Te quedan {quedan} intento(s) antes de que la cuenta se bloquee por 1 minuto.",
+                    code="invalid_login",
+                )
+            # Cualquier otro error (por ejemplo, cuenta desactivada) se muestra tal cual.
+            raise
+
+
+class IngresoAdminForm(BloqueoPorIntentosMixin, AdminAuthenticationForm):
+    """Login de Django Admin con los mismos mensajes de bloqueo (se activa en admin.py)."""
+
+
+class IngresoForm(BloqueoPorIntentosMixin, AuthenticationForm):
+    """
+    Formulario de inicio de sesión.
+
+    Hereda de AuthenticationForm de Django, que al validarse llama a
+    authenticate() y rechaza contraseñas incorrectas y cuentas desactivadas.
+    Aquí se ajustan los textos, se agrega la casilla "Mantener sesión iniciada"
+    y, con el mixin, los mensajes del bloqueo por intentos fallidos.
+    """
+
+    # Casilla opcional: si se marca, la sesión sobrevive al cierre del navegador.
+    recordarme = forms.BooleanField(label="Mantener sesión iniciada", required=False)
+
+    # Mensajes de error en español, reemplazando los que trae Django.
+    error_messages = {
+        "invalid_login": "Usuario o contraseña incorrectos.",
+        "inactive": "Esta cuenta está desactivada.",
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Se puede escribir el nombre o el correo (ver backends.py).
+        self.fields["username"].label = "Usuario o correo"
+        # Django limita el largo al del nombre (20); el correo puede llegar a 30.
+        self.fields["username"].max_length = 30
+        self.fields["username"].widget.attrs["maxlength"] = 30
 
 
 class UsuarioForm(forms.ModelForm):
     """Formulario para crear y editar cuentas de usuario."""
 
     # Campo extra que no existe en el modelo: la contraseña sin cifrar que escribe el admin.
-    password = forms.CharField(
+    # Se llama "clave" y no "password" para no confundirlo con el campo del modelo,
+    # que guarda el hash.
+    clave = forms.CharField(
         # Texto que se muestra sobre el campo.
         label="Contraseña",
         # PasswordInput muestra puntos en vez de letras; render_value=False la deja vacía al recargar.
@@ -45,20 +137,22 @@ class UsuarioForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         # Se arma el formulario normal de Django.
         super().__init__(*args, **kwargs)
-        # instance.pk es None cuando el usuario todavía no existe, o sea al crearlo.
-        if self.instance.pk is None:
+        # _state.adding es True cuando el usuario todavía no existe en la base, o sea al crearlo.
+        # (No sirve preguntar por pk: el Id es una fecha que se rellena sola al armar el objeto).
+        if self.instance._state.adding:
             # Al crear, la contraseña sí es obligatoria.
-            self.fields["password"].required = True
+            self.fields["clave"].required = True
             # Y se borra la ayuda, porque hablaba del caso de editar.
-            self.fields["password"].help_text = ""
+            self.fields["clave"].help_text = ""
 
-    def clean_password(self):
-        """Django llama sola a este método para revisar el campo password."""
+    def clean_clave(self):
+        """Django llama sola a este método para revisar el campo clave."""
         # Se toma el valor ya limpio que escribió la persona.
-        clave = self.cleaned_data["password"]
-        # Si escribió algo y es muy corto, se rechaza.
-        if clave and len(clave) < 6:
-            raise forms.ValidationError("La contraseña debe tener al menos 6 caracteres.")
+        clave = self.cleaned_data["clave"]
+        # Si escribió algo, se revisa con las reglas de contraseña de settings.py.
+        # Si no las cumple, validate_password lanza el error con la explicación.
+        if clave:
+            password_validation.validate_password(clave, self.instance)
         # Si pasó la revisión, se devuelve tal cual.
         return clave
 
@@ -67,10 +161,11 @@ class UsuarioForm(forms.ModelForm):
         # commit=False arma el objeto en memoria, sin escribir todavía en la base.
         usuario = super().save(commit=False)
         # Se recupera la contraseña escrita en el formulario.
-        clave = self.cleaned_data["password"]
+        clave = self.cleaned_data["clave"]
         # Solo si escribieron una nueva se reemplaza la guardada.
         if clave:
-            usuario.password_usuario = make_password(clave)
+            # set_password (de Django) guarda el hash, nunca el texto plano.
+            usuario.set_password(clave)
         # Ahora sí se escribe la fila en la base de datos.
         if commit:
             usuario.save()

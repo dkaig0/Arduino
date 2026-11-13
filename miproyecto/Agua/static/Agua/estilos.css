@@ -72,6 +72,89 @@ a:hover { color: var(--accent-strong); }
   padding: 10px 12px; border-radius: 9px;
 }
 .login-pie { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 22px; }
+/* Aviso verde del login, por ejemplo "Cerraste sesión correctamente". */
+.login-aviso {
+  background: var(--good-soft); color: var(--good); font-size: 12.5px;
+  padding: 10px 12px; border-radius: 9px; margin-bottom: 8px;
+}
+/* Casilla "Mantener sesión iniciada": en línea con su texto, sin ocupar todo el ancho. */
+.login-card .login-recordar {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--text); margin-top: 16px; cursor: pointer;
+}
+.login-card .login-recordar input { width: 16px; height: 16px; accent-color: var(--accent); }
+/* Enlace "Preferencias de cookies" bajo el login. */
+.login-cookies { text-align: center; margin-top: 8px; }
+.login-cookies button {
+  background: none; border: none; padding: 0; cursor: pointer; font-family: inherit;
+  font-size: 11px; color: var(--text-muted); text-decoration: underline;
+}
+
+/* ---------- Ventana de consentimiento de cookies ---------- */
+/* Fondo oscuro que cubre toda la página y centra la ventana. */
+.cookies-fondo {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(13, 43, 48, .65);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  /* El fondo aparece de a poco (animación cookies-aparecer, más abajo). */
+  animation: cookies-aparecer .25s ease-out both;
+}
+.cookies-caja {
+  background: var(--surface); color: var(--text); border-radius: 14px;
+  width: 100%; max-width: 470px; padding: 26px 26px 20px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .3);
+  /* Efecto "popout": la caja sube y salta hacia adelante, con un pequeño rebote. */
+  animation: cookies-saltar .5s .1s cubic-bezier(.2, .8, .3, 1.2) both;
+}
+/* Fila con el ícono y el título. */
+.cookies-cabecera { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.cookies-titulo { font-size: 18px; font-weight: 700; }
+
+/* Galleta dibujada solo con CSS: un círculo dorado con "chispas" de chocolate.
+   Cada radial-gradient pinta una chispa en una posición distinta. */
+.cookies-icono {
+  width: 40px; height: 40px; border-radius: 50%; flex: 0 0 auto;
+  background:
+    radial-gradient(circle at 30% 35%, #6b4423 0 3px, transparent 3.5px),
+    radial-gradient(circle at 63% 27%, #6b4423 0 2.5px, transparent 3px),
+    radial-gradient(circle at 56% 62%, #6b4423 0 3px, transparent 3.5px),
+    radial-gradient(circle at 27% 70%, #6b4423 0 2px, transparent 2.5px),
+    radial-gradient(circle at 78% 56%, #6b4423 0 2px, transparent 2.5px),
+    #d9a066;
+  /* Sombra interior para dar volumen. */
+  box-shadow: inset -3px -4px 0 rgba(0, 0, 0, .12);
+  /* La galleta entra girando, un poco después que la caja. */
+  animation: cookies-girar .7s .35s ease-out both;
+}
+
+/* Animaciones de la ventana (@keyframes define cada paso de la animación). */
+@keyframes cookies-aparecer {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes cookies-saltar {
+  0%   { opacity: 0; transform: translateY(28px) scale(.9); }
+  70%  { opacity: 1; transform: translateY(-4px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes cookies-girar {
+  from { opacity: 0; transform: rotate(-120deg) scale(.5); }
+  to   { opacity: 1; transform: rotate(0) scale(1); }
+}
+/* Si la persona pidió reducir el movimiento en su sistema, la ventana aparece sin animación. */
+@media (prefers-reduced-motion: reduce) {
+  .cookies-fondo, .cookies-caja, .cookies-icono { animation: none; }
+}
+.cookies-texto { font-size: 13px; line-height: 1.55; color: var(--text-muted); margin: 0 0 10px; }
+.cookies-texto strong { color: var(--text); }
+.cookies-acciones { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+/* Botón de rechazo: mismo tamaño que aceptar, pero sin relleno, para no inducir la elección. */
+/* Se escribe ".boton.cookies-rechazar" (dos clases) para ganarle a la regla .boton, que está más abajo. */
+.boton.cookies-rechazar { background: var(--surface); color: var(--accent); border: 1px solid var(--accent); }
+.boton.cookies-rechazar:hover { background: var(--bg); color: var(--accent-strong); }
+.cookies-pie { font-size: 11px; color: var(--text-muted); margin-top: 14px; }
+/* Enlace "Preferencias de cookies" de la barra lateral. */
+.preferencias-cookies { margin-bottom: 10px; }
 
 /* ---------- Estructura: barra lateral + contenido ---------- */
 .shell { display: flex; min-height: 100vh; }
@@ -153,6 +236,16 @@ a:hover { color: var(--accent-strong); }
   font-size: 11.5px; color: var(--text-muted);
 }
 .vacio { color: var(--text-muted); font-size: 13px; padding: 16px 0; }
+
+/* Recuadro "Tu sesión" del dashboard: tres columnas con datos de la sesión y la cookie. */
+.sesion-card {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
+  margin-top: 22px; font-size: 13px;
+}
+/* En pantallas angostas las tres columnas pasan a una sola. */
+@media (max-width: 700px) {
+  .sesion-card { grid-template-columns: 1fr; }
+}
 
 /* ---------- Ficha del tinaco: pH, escala y datos ---------- */
 .detalle-grid { display: grid; grid-template-columns: 250px 1fr; gap: 14px; margin: 20px 0; }

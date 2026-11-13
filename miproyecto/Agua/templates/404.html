@@ -1,0 +1,24 @@
+{# Página de "no encontrado" (error 404). #}
+{# Django la usa cuando DEBUG = False; con DEBUG = True muestra su página técnica. #}
+{# Aparece, por ejemplo, si una cuenta de solo lectura abre un tinaco que no es suyo. #}
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Página no encontrada · AquaVida</title>
+  <link rel="stylesheet" href="{% static 'Agua/estilos.css' %}?v={{ version_css }}">
+</head>
+<body class="login-body">
+  <div class="login-card">
+    <div class="login-marca">Página no encontrada</div>
+    <div class="login-sub">Error 404</div>
+    <p class="confirmar-texto">
+      La dirección no existe o el registro no está disponible para tu cuenta.
+    </p>
+    <a class="boton" href="{% url 'dashboard' %}">Volver al dashboard</a>
+    <div class="login-pie">ODS 6 · Agua limpia y saneamiento</div>
+  </div>
+</body>
+</html>

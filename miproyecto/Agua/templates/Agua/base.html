@@ -13,7 +13,7 @@
   {# Título de la pestaña. Cada página puede reemplazarlo con su propio bloque. #}
   <title>{% block titulo %}AquaVida{% endblock %}</title>
   {# Hoja de estilos de la aplicación. #}
-  <link rel="stylesheet" href="{% static 'Agua/estilos.css' %}">
+  <link rel="stylesheet" href="{% static 'Agua/estilos.css' %}?v={{ version_css }}">
 </head>
 <body>
 {# Contenedor principal: barra lateral a la izquierda y contenido a la derecha. #}
@@ -30,9 +30,14 @@
     <div class="nav-label">Navegación</div>
     {# Enlace al dashboard. La clase "active" lo resalta cuando se está en esa sección. #}
     <a class="nav-item {% if seccion == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Dashboard</a>
-    {# La sección de usuarios solo se muestra al administrador. #}
-    {% if es_admin %}
+    {# perms trae los permisos de la cuenta conectada (has_perm en models.py). #}
+    {# La sección de usuarios solo se muestra a quien puede verlos: el administrador. #}
+    {% if perms.Agua.view_usuario %}
       <a class="nav-item {% if seccion == 'usuarios' %}active{% endif %}" href="{% url 'usuarios' %}">Usuarios</a>
+    {% endif %}
+    {# El panel Django Admin solo admite cuentas con is_staff (rol Administrador). #}
+    {% if user.is_staff %}
+      <a class="nav-item" href="{% url 'admin:index' %}">Panel Django Admin</a>
     {% endif %}
 
     <div class="nav-label">Tinacos</div>
@@ -47,8 +52,8 @@
         <span class="nav-ph">{{ t.medicion.ph_medicion|floatformat:1 }}</span>
       </a>
     {% endfor %}
-    {# Solo el administrador puede crear tinacos. #}
-    {% if es_admin %}
+    {# Solo quien tiene el permiso de crear tinacos ve este enlace. #}
+    {% if perms.Agua.add_tinaco %}
       <a class="nav-item nav-nuevo" href="{% url 'tinaco_nuevo' %}">+ Nuevo tinaco</a>
     {% endif %}
 
@@ -61,11 +66,23 @@
       <div class="ods-text">Agua limpia y saneamiento</div>
     </div>
 
-    {# Quién está conectado, con su rol, y el enlace para cerrar sesión. #}
+    {# Quién está conectado (user lo entrega Django desde la sesión), con su rol. #}
     <div class="sesion">
-      <span>{{ usuario.nombre_usuario }} · {{ usuario.rol }}</span>
-      <a class="salir" href="{% url 'logout' %}">Salir</a>
+      <span>{{ user.nombre_usuario }} · {{ user.rol }}</span>
+      {# Cerrar sesión es un formulario POST con token CSRF: un enlace o una #}
+      {# imagen de otro sitio no puede cerrar la sesión sin que la persona lo pida. #}
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button class="salir" type="submit">Salir</button>
+      </form>
     </div>
+    {# Borra la decisión sobre cookies para que la ventana vuelva a aparecer. #}
+    <form class="preferencias-cookies" method="post" action="{% url 'guardar_cookies' %}">
+      {% csrf_token %}
+      <input type="hidden" name="decision" value="cambiar">
+      <input type="hidden" name="volver" value="{{ request.get_full_path }}">
+      <button class="salir" type="submit">Preferencias de cookies</button>
+    </form>
     {# Tecnologías usadas, como referencia en la presentación. #}
     <div class="stack mono">Django · MariaDB · Arduino UNO</div>
   </div>
@@ -85,5 +102,10 @@
   </div>
 
 </div>
+
+{# Ventana de cookies, solo mientras la persona no haya decidido. #}
+{% if mostrar_aviso_cookies %}
+  {% include "Agua/cookies.html" %}
+{% endif %}
 </body>
 </html>

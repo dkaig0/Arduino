@@ -22,11 +22,42 @@
     </div>
   </div>
   <div class="acciones">
-    {# Solo el administrador ve el botón para crear. #}
-    {% if es_admin %}
+    {# Solo quien tiene el permiso de crear tinacos ve el botón. #}
+    {% if perms.Agua.add_tinaco %}
       <a class="boton" href="{% url 'tinaco_nuevo' %}">+ Nuevo tinaco</a>
     {% else %}
       <span class="chip">cuenta de solo lectura</span>
+    {% endif %}
+  </div>
+</div>
+
+{# Recuadro "Tu sesión": muestra datos que dependen de la sesión activa y de la cookie. #}
+<div class="card sesion-card">
+  <div>
+    <div class="panel-label">Tu sesión</div>
+    {# user y su rol salen de la sesión: Django los recupera en cada visita. #}
+    <strong>{{ user.nombre_usuario }}</strong> · {{ user.rol }}
+    {% if es_admin %}(acceso total){% else %}(solo lectura de tus tinacos){% endif %}
+  </div>
+  <div>
+    <div class="panel-label">Ingreso anterior en este navegador</div>
+    {# Este dato se leyó de la cookie opcional "ultimo_ingreso" al iniciar sesión. #}
+    {# cookies_aceptadas viene de context_processors.py. #}
+    {% if not cookies_aceptadas %}
+      No disponible: no aceptaste las cookies opcionales.
+    {% elif ingreso_anterior %}
+      {{ ingreso_anterior|date:"d M Y, H:i" }}
+    {% else %}
+      Es tu primer ingreso registrado en este navegador.
+    {% endif %}
+  </div>
+  <div>
+    <div class="panel-label">Duración de la sesión</div>
+    {# Depende de si se marcó "Mantener sesión iniciada" al entrar. #}
+    {% if sesion_temporal %}
+      Termina al cerrar el navegador.
+    {% else %}
+      Recordada hasta el {{ sesion_vence|date:"d M Y, H:i" }}.
     {% endif %}
   </div>
 </div>

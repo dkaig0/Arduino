@@ -20,6 +20,8 @@ urlpatterns = [
     # El name sirve para generar enlaces con {% url 'login' %} en los templates.
     path("login/", views.login, name="login"),
     path("logout/", views.logout, name="logout"),
+    # Guarda la decisión de la ventana de cookies (aceptar, rechazar o volver a preguntar).
+    path("cookies/", views.guardar_cookies, name="guardar_cookies"),
     # Lectura (los dos roles)
     # La ruta vacía es la página de inicio del sitio.
     path("", views.dashboard, name="dashboard"),

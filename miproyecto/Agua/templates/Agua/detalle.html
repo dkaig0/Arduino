@@ -18,11 +18,13 @@
       · {{ tinaco.capacidad_tinaco }} litros
     </div>
   </div>
-  {# Los botones de editar y eliminar son solo para el administrador. #}
-  {% if es_admin %}
+  {# Los botones de editar y eliminar solo aparecen con los permisos correspondientes. #}
+  {% if perms.Agua.change_tinaco %}
     <div class="acciones">
       <a class="boton boton-secundario" href="{% url 'tinaco_editar' tinaco.id_tinaco %}">Editar tinaco</a>
-      <a class="boton boton-peligro" href="{% url 'tinaco_eliminar' tinaco.id_tinaco %}">Eliminar</a>
+      {% if perms.Agua.delete_tinaco %}
+        <a class="boton boton-peligro" href="{% url 'tinaco_eliminar' tinaco.id_tinaco %}">Eliminar</a>
+      {% endif %}
     </div>
   {% else %}
     <span class="chip">cuenta de solo lectura</span>
@@ -89,17 +91,19 @@
         <td>
           {% if lugar %}
             {{ lugar.calle }} {{ lugar.numero }}, {{ lugar.comuna }}, {{ lugar.ciudad }} · {{ lugar.region }}
-            {# Editar o borrar la dirección: solo administrador. #}
-            {% if es_admin %}
+            {# Editar o borrar la dirección: solo con los permisos de ubicación. #}
+            {% if perms.Agua.change_ubicacion %}
               <span class="acciones-fila">
                 <a href="{% url 'ubicacion_editar' lugar.id_ubicacion %}">Editar</a>
-                <a class="peligro" href="{% url 'ubicacion_eliminar' lugar.id_ubicacion %}">Eliminar</a>
+                {% if perms.Agua.delete_ubicacion %}
+                  <a class="peligro" href="{% url 'ubicacion_eliminar' lugar.id_ubicacion %}">Eliminar</a>
+                {% endif %}
               </span>
             {% endif %}
           {% else %}
             Sin ubicación registrada
-            {# Si no hay dirección, el administrador puede agregarla. #}
-            {% if es_admin %}
+            {# Si no hay dirección, quien tenga el permiso puede agregarla. #}
+            {% if perms.Agua.add_ubicacion %}
               <span class="acciones-fila"><a href="{% url 'ubicacion_nueva' tinaco.id_tinaco %}">Agregar ubicación</a></span>
             {% endif %}
           {% endif %}
@@ -115,7 +119,7 @@
 <div class="card">
   <div class="page-head" style="margin-bottom: 14px;">
     <div class="panel-label" style="margin: 0;">Mediciones registradas</div>
-    {% if es_admin %}
+    {% if perms.Agua.add_medicion %}
       <a class="boton" href="{% url 'medicion_nueva' tinaco.id_tinaco %}">+ Nueva medición</a>
     {% endif %}
   </div>
@@ -127,8 +131,8 @@
       <th>pH</th>
       <th>Agua</th>
       <th>Estado</th>
-      {# La columna de acciones solo existe para el administrador. #}
-      {% if es_admin %}<th></th>{% endif %}
+      {# La columna de acciones solo existe para quien puede modificar mediciones. #}
+      {% if perms.Agua.change_medicion %}<th></th>{% endif %}
     </tr>
     {# Una fila por medición, de la más nueva a la más antigua. #}
     {% for m in mediciones %}
@@ -144,10 +148,12 @@
             <span style="color: var(--bad);">{{ m.estado }}</span>
           {% endif %}
         </td>
-        {% if es_admin %}
+        {% if perms.Agua.change_medicion %}
           <td class="acciones-fila">
             <a href="{% url 'medicion_editar' m.id_medicion %}">Editar</a>
-            <a class="peligro" href="{% url 'medicion_eliminar' m.id_medicion %}">Eliminar</a>
+            {% if perms.Agua.delete_medicion %}
+              <a class="peligro" href="{% url 'medicion_eliminar' m.id_medicion %}">Eliminar</a>
+            {% endif %}
           </td>
         {% endif %}
       </tr>
